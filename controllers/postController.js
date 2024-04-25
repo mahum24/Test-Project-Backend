@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { uploadFile, getObjectSignedUrl } from '../s3.js';
 import Post from '../models/post.js';
 import multer from 'multer';
+import  axios from 'axios'
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -15,11 +16,11 @@ export const getPostById = async (req, res) => {
             return res.status(404).json({ error: 'Post not found' });
         }
         const imageUrl = await getObjectSignedUrl(post.imageName);
-        const new_post = {
-            ...post.toObject(),
-            imageUrl
-        };
-        res.json(new_post);
+        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        const imageData = Buffer.from(response.data, 'binary');
+        
+        res.end(JSON.stringify({ post, imageData }));
+        
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
